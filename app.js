@@ -178,14 +178,37 @@ function copia(t){try{if(navigator.clipboard)return navigator.clipboard.writeTex
 const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");toast("Messaggio copiato")}catch(e){toast("Copia non riuscita")}a.remove()}
 const btnCh=(x,j)=>{const p=j==null?x:x.details[j];return `${p.wa?`<a class="b c-wa" href="${esc(p.wa)}">Apri WhatsApp</a>`:`<button class="b c-add" data-act="ct" data-id="${esc(x.id)}">Aggiungi telefono</button>`}${p.mail?`<a class="b c-em" href="${esc(p.mail)}">Apri Email</a>`:`<button class="b c-add" data-act="ct" data-id="${esc(x.id)}">Aggiungi email</button>`}`};
 /* coda guidata */
-let FQ=[],FI=0,FCH="";
+let FQ=[],FI=0,FCH="",FID="",FSEL=null,FDQ=0;
+/* gruppo ricostruito su un sottoinsieme di polizze dello stesso cliente (messaggio solo per quelle) */
+function subGroup(keys){const o=oggi(),finoDom=6-((o.getDay()+6)%7);
+const L=db.pol.filter(p=>keys.includes(p.key)).map(p=>{const sc=fromISO(p.scad),g=Math.round((sc-o)/864e5);return{...p,sc,g,tol:addD(sc,15),st:stato(g)}});
+return L.length?creaGruppo(L,db.contacts||{},finoDom):null}
+/* doppio quietanzamento: tutte le schede DQ dello stesso cliente ancora in coda (dalla posizione attuale) */
+const dqSib=x=>x&&x.dq?FQ.slice(FI).filter(y=>y.dq&&y.cod===x.cod).sort((a,b)=>a.imp-b.imp):[];
+function focusTarget(){const x=FQ[FI];if(!x)return null;const sib=dqSib(x);let T=sib.length>1?sib[Math.min(FDQ,sib.length-1)]:x;
+if(T.multi&&FSEL&&FSEL.size<T.keys.length)T=FSEL.size?subGroup([...FSEL]):null;return{x,sib,T}}
 function focusShow(){if(FI>=FQ.length){modal(`<div class="done"><div class="big">🎉</div><h3>Coda completata</h3><p>Hai gestito tutti i clienti della lista.</p><button class="b c-gry" data-act="close">Chiudi</button></div>`);return}
-const x=FQ[FI],acc=accOf(x);FCH="";
+const x0=FQ[FI];if(x0.id!==FID){FID=x0.id;FSEL=null;FDQ=0}
+const{x,sib,T}=focusTarget(),B=T||x,acc=accOf(B);FCH="";
+const full=sib.length>1?sib[Math.min(FDQ,sib.length-1)]:x;
+if(full.multi&&!FSEL)FSEL=new Set(full.keys);
+const dqBox=sib.length>1?`<div class="fq-dqw"><b>⚠️ DOPPIO QUIETANZAMENTO</b><span>Ci sono ${sib.length} quietanze per lo stesso cliente: scegli quale avviso mandare. Le altre vanno in archivio senza avviso.</span>
+<div class="fq-dqs">${sib.map((y,i)=>`<button class="fq-dq ${i===Math.min(FDQ,sib.length-1)?"on":""}" data-act="fdq" data-i="${i}"><i></i><span><b>€ ${y.impf}</b>${y.dqRole?`<em>${esc(y.dqRole)}</em>`:""}<small>${esc(y.tip)} · n. ${esc(y.num)} · scade ${esc(y.scad)}</small></span></button>`).join("")}</div></div>`:"";
+const polBox=full.multi?`<div class="fq-pols"><div class="fq-pt"><b>📑 ${full.details.length} polizze</b><span>Togli la spunta a quelle da non avvisare adesso</span></div>${full.details.map(p=>`<label class="fq-pol"><input type="checkbox" data-act="fsel" data-k="${esc(p.key)}" ${FSEL.has(p.key)?"checked":""}><span class="bx">${I.check}</span><span class="t"><b>${esc(p.nome)}</b><small>n. ${esc(p.num)} · scade ${esc(p.scad)}</small></span><span class="a">€ ${eurF(p.imp)}</span></label>`).join("")}</div>`:"";
+const nSel=full.multi?FSEL.size:0,parz=full.multi&&nSel<full.details.length;
 modal(`<div class="fq-h"><span>${FI+1} / ${FQ.length}</span><div class="pb"><i style="width:${Math.round(FI/FQ.length*100)}%"></i></div><button class="x" data-act="close" title="Esci">✕</button></div>
-<div class="fq-b" style="--acc:${acc}"><div class="av" style="background:${acc}">${esc(ini(x.cli))}</div><h2>${esc(x.cli)}</h2><div class="am">€ ${x.impf}</div><div>${pill(x)}</div>
-<p>${x.multi?"📑 Polizze multiple · "+x.details.length:esc(x.tip)}</p><p>📅 ${x.scad} · <b>${gtxt(x)}</b></p>${tolBar(x)}</div>
-<div class="fq-a">${x.wa?`<a class="b c-wa" href="${esc(x.wa)}" data-ch="whatsapp">${I.chat}WhatsApp</a>`:`<span class="b off">WhatsApp</span>`}${x.mail?`<a class="b c-em" href="${esc(x.mail)}" data-ch="email">${I.mail}Email</a>`:`<span class="b off">Email</span>`}${x.sms?`<a class="b c-sms" href="${esc(x.sms)}" data-ch="sms">${I.sms}SMS</a>`:`<span class="b off">SMS</span>`}</div>
-<button class="b c-grn" id="fdone" data-act="fdone" style="opacity:.55">✅ Fatto (apri prima un canale)</button><div class="fq-2"><button class="b c-gry" data-act="farch">🗄 Archivia</button><button class="b c-gry" data-act="fskip">Salta →</button></div>`,"focus")}
+<div class="fq-b" style="--acc:${acc}"><div class="av" style="background:${acc}">${esc(ini(x.cli))}</div><h2>${esc(x.cli)}</h2><div class="am">€ ${T?T.impf:"0,00"}</div><div>${pill(B)}</div>
+<p>${full.multi?(parz?`📑 Avviso solo per ${nSel} di ${full.details.length} polizze`:"📑 Polizze multiple · "+full.details.length):esc(B.tip)}</p><p>📅 ${B.scad} · <b>${gtxt(B)}</b></p>${tolBar(B)}</div>
+${dqBox}${polBox}
+${T?`<div class="fq-a">${T.wa?`<a class="b c-wa" href="${esc(T.wa)}" data-ch="whatsapp">${I.chat}WhatsApp</a>`:`<span class="b off">WhatsApp</span>`}${T.mail?`<a class="b c-em" href="${esc(T.mail)}" data-ch="email">${I.mail}Email</a>`:`<span class="b off">Email</span>`}${T.sms?`<a class="b c-sms" href="${esc(T.sms)}" data-ch="sms">${I.sms}SMS</a>`:`<span class="b off">SMS</span>`}</div>
+<button class="b c-grn" id="fdone" data-act="fdone" style="opacity:.55">✅ Fatto (apri prima un canale)</button>`:`<p class="fq-none">Seleziona almeno una polizza da avvisare.</p>`}
+<div class="fq-2"><button class="b c-gry" data-act="farch">🗄 Archivia${parz?" selezionate":""}</button><button class="b c-gry" data-act="fskip">Salta →</button></div>`,"focus")}
+/* dopo aver gestito una parte delle polizze, il cliente resta in coda con quelle rimaste */
+function focusNext(T,x,sib){
+if(sib.length>1){const ids=new Set(sib.map(y=>y.id));FQ=FQ.filter((y,i)=>i<FI||!ids.has(y.id));return focusShow()}
+const rest=(x.keys||[]).filter(k=>!T.keys.includes(k)),R=rest.length?subGroup(rest):null;
+if(R){FQ[FI]=R;FID=R.id;FSEL=new Set(R.keys);return focusShow()}
+FI++;return focusShow()}
 /* azioni a click */
 function act(t,id,j,el){const x=id?IDX.get(id):null;
 switch(t){
@@ -200,10 +223,12 @@ case"chiudiRep":db.lastReport=null;save();return render();
 case"toastundo":if(UNDO){const u=UNDO;UNDO=null;$("toast").classList.remove("on");u()}return;
 case"tool":return tool(el.dataset.t);
 case"focus":FQ=CUR.slice();FI=0;if(!FQ.length)return toast("Nessun cliente in coda");return focusShow();
-case"fdone":if(!FCH)return toast("Apri prima WhatsApp, Email o SMS");{const X=FQ[FI],c=FCH;finX(X,c,true);toast("Archiviato: "+X.cli+" ("+CAN[c][0]+")");FI++;return focusShow()}
-case"fskip":FI++;return focusShow();
-case"farch":{const X=FQ[FI];if(!X)return;const ks=new Set(X.keys||[]),L=db.pol.filter(p=>ks.has(p.key)&&!p.arch),ts=Date.now();L.forEach(p=>p.arch={ts});save();render();
-toast("🗄 "+X.cli+" archiviato (lo trovi in Archiviati)",()=>{L.forEach(p=>delete p.arch);save();render()});FI++;return focusShow()}
+case"fdone":if(!FCH)return toast("Apri prima WhatsApp, Email o SMS");{const F=focusTarget();if(!F||!F.T)return;const c=FCH;finX(F.T,c,true);toast("Avvisato: "+F.T.cli+(F.T.keys.length<(F.x.keys||[]).length&&!F.T.dq?" ("+F.T.keys.length+" polizze)":"")+" via "+CAN[c][0]);return focusNext(F.T,F.x,F.sib)}
+case"fsel":{const k=el.dataset.k;if(!FSEL)return;el.checked?FSEL.add(k):FSEL.delete(k);return focusShow()}
+case"fdq":FDQ=+el.dataset.i;FSEL=null;return focusShow();
+case"fskip":{const F=focusTarget();if(F&&F.sib.length>1){const ids=new Set(F.sib.map(y=>y.id));FQ=FQ.filter((y,i)=>i<FI||!ids.has(y.id))}else FI++;return focusShow()}
+case"farch":{const F=focusTarget();if(!F)return;const X=F.sib.length>1?{keys:F.sib.flatMap(y=>y.keys),cli:F.x.cli}:(F.T||F.x);const ks=new Set(X.keys||[]),L=db.pol.filter(p=>ks.has(p.key)&&!p.arch),ts=Date.now();L.forEach(p=>p.arch={ts});save();render();
+toast("🗄 "+X.cli+" archiviato (lo trovi in Archiviati)",()=>{L.forEach(p=>delete p.arch);save();render()});return focusNext({keys:X.keys},F.x,F.sib)}
 case"unarch":{const p=db.pol.find(q=>q.key===el.dataset.k);if(!p)return;const old=p.arch;delete p.arch;save();render();return toast("Riportata in Da avvisare: "+p.cli,()=>{p.arch=old;save();render()})}
 case"unpag":{const p=db.pol.find(q=>q.key===el.dataset.k);if(!p)return;const old=p.pag;delete p.pag;save();render();return toast("Riportato tra le scadenze: "+p.cli,()=>{p.pag=old;save();render()})}
 }

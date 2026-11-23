@@ -255,3 +255,25 @@ body.locked .side,body.locked .top,body.locked .bnav{display:none!important}body
 .unl:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 18%,transparent)}
 
 .fq-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fq-2 .b{margin-top:10px}
+
+/* coda: doppio quietanzamento e scelta polizze */
+.fq-dqw{border:1.5px solid color-mix(in srgb,#7C3AED 45%,transparent);background:color-mix(in srgb,#7C3AED 8%,var(--sf));border-radius:16px;padding:12px;margin:4px 0 12px}
+.fq-dqw>b{display:block;color:#6D28D9;font-size:13.5px;letter-spacing:.06em}[data-theme=dark] .fq-dqw>b{color:#C4B5FD}
+.fq-dqw>span{display:block;font-size:13.5px;color:var(--mu);margin:4px 0 10px}
+.fq-dqs{display:grid;gap:8px}
+.fq-dq{display:flex;gap:12px;align-items:center;text-align:left;width:100%;border:1.5px solid var(--ln);background:var(--sf);border-radius:13px;padding:10px 12px;cursor:pointer}
+.fq-dq i{width:20px;height:20px;border-radius:50%;border:2px solid var(--mu);flex:none}
+.fq-dq.on{border-color:#7C3AED;box-shadow:0 0 0 3px color-mix(in srgb,#7C3AED 18%,transparent)}.fq-dq.on i{border:6px solid #7C3AED}
+.fq-dq b{font-size:17px;margin-right:8px}.fq-dq em{font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#7C3AED;border-radius:99px;padding:2px 8px}
+.fq-dq small{display:block;color:var(--mu);font-size:13px;margin-top:3px}
+.fq-pols{border:1px solid var(--ln);border-radius:16px;padding:4px 12px;margin:4px 0 12px;background:var(--sf2)}
+.fq-pt{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px;padding:8px 0;font-size:14px}.fq-pt span{color:var(--mu);font-size:12.5px}
+.fq-pol{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ln);cursor:pointer;position:relative}
+.fq-pol input{position:absolute;opacity:0;width:1px;height:1px}
+.fq-pol .bx{width:26px;height:26px;border-radius:8px;border:2px solid color-mix(in srgb,var(--tx) 35%,transparent);display:grid;place-items:center;flex:none;color:#fff;background:var(--sf)}
+.fq-pol .bx svg{width:16px;height:16px;opacity:0;stroke-width:3}.fq-pol input:checked+.bx{background:#10B981;border-color:#10B981}.fq-pol input:checked+.bx svg{opacity:1}
+.fq-pol .t{flex:1;min-width:0}.fq-pol .t b{display:block;font-size:15px}.fq-pol .t small{color:var(--mu);font-size:12.5px}
+.fq-pol .a{font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fq-none{text-align:center;color:var(--mu);font-weight:600;padding:10px}
+#mod.focus .box{overflow:auto}
+.box .fq-pol{display:flex;margin-top:0;font-weight:500}
