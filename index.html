@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scadenze · Bra 008</title>
+<meta name="description" content="Scadenze delle polizze da avvisare – Agenzia 008 Bra">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#F3F5FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1C" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Scadenze">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512" href="icone/mac-512.png">
+<link rel="icon" type="image/svg+xml" href="icone/favicon.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+<aside class="side">
+ <div class="logo"><img src="icone/icon-192.png" alt=""><div><b>Scadenze</b><small>Agenzia 008 · Bra</small></div></div>
+ <nav id="nav"></nav>
+ <h6>Strumenti</h6><div id="tools"></div>
+ <div class="sp"></div>
+ <div class="gdpr">🔒 Dati personali dei clienti (GDPR): restano sui tuoi dispositivi e, se sincronizzi, viaggiano solo cifrati.</div>
+</aside>
+<div class="main">
+ <header class="top">
+  <button class="mlogo" id="mn" title="Strumenti" aria-label="Strumenti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="q" type="search" autocomplete="off" placeholder="Cerca cliente, polizza o telefono"><kbd>/</kbd></div>
+  <button class="bkchip" id="bkc"></button>
+  <button class="ib" id="th" title="Tema: automatico (alba/tramonto), chiaro o scuro" aria-label="Tema"></button>
+ </header>
+ <main id="m"></main>
+</div>
+<nav class="bnav" id="bnav"></nav>
+</div>
+<div id="mod"></div><div id="toast"></div>
+<div id="dropov"><div>📥<br>Rilascia qui i file<br><small>Excel scadenze · backup</small></div></div>
+<input type="file" id="f" accept=".xlsx,.xlsm" multiple><input type="file" id="imp" accept=".json,application/json">
+<script src="core.js"></script>
+<script src="sync.js"></script>
+<script src="app.js"></script>
+<script>
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").then(r=>{
+ r.addEventListener("updatefound",()=>{const w=r.installing;w&&w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){const t=document.getElementById("toast");t.innerHTML='Nuova versione dell\'app <button onclick="location.reload()">Aggiorna</button>';t.classList.add("on")}})})}).catch(()=>{});
+</script>
+</body>
+</html>
