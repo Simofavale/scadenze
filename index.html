@@ -45,8 +45,14 @@
 <script src="sync.js"></script>
 <script src="app.js"></script>
 <script>
-if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").then(r=>{
- r.addEventListener("updatefound",()=>{const w=r.installing;w&&w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){const t=document.getElementById("toast");t.innerHTML='Nuova versione dell\'app <button onclick="location.reload()">Aggiorna</button>';t.classList.add("on")}})})}).catch(()=>{});
+/* aggiornamento automatico: a ogni apertura (e quando torni sull'app) controlla se c'è una versione nuova e la carica da sola */
+if("serviceWorker" in navigator&&location.protocol==="https:"){
+ const had=!!navigator.serviceWorker.controller;let ricaricato=false;
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!had||ricaricato)return;ricaricato=true;
+  if(document.getElementById("mod").style.display==="flex")return;location.reload()});
+ navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{const ck=()=>r.update().catch(()=>{});ck();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)ck()});addEventListener("online",ck)}).catch(()=>{});
+}
 </script>
 </body>
 </html>
