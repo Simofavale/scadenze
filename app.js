@@ -112,7 +112,7 @@ const sorter=(a,b)=>((a[sk]>b[sk]?1:a[sk]<b[sk]?-1:0)*sd)||a.cli.localeCompare(b
 const PAGES={scad:["Da avvisare","Clienti con una scadenza ancora da comunicare"],urg:["Promemoria urgenti","Scadenze fino a domenica, già passate o con la tolleranza che sta per finire"],arch:["Archivio avvisati","Chi è stato avvisato, quando e con quale canale"],pag:["Già pagati","Polizze che non compaiono più nell'ultimo Excel caricato: risultano pagate"],dis:["Disdettati","Polizze disdettate o stornate, non vengono avvisate"],nc:["Non contattare","Clienti esclusi da ogni avviso"]};
 const SORTS={scad:[["sortScad:1","Scadenza ↑ (più vicine)"],["sortScad:-1","Scadenza ↓ (più lontane)"],["imp:-1","Importo più alto"],["cli:1","Nome A–Z"]],arch:[["ts:-1","Più recenti"],["ts:1","Meno recenti"],["sortScad:1","Scadenza ↑"],["imp:-1","Importo più alto"],["cli:1","Nome A–Z"]]};
 /* ===== render ===== */
-function render(){const D=compute();LAST=D;const{o,G,NC,U,A,Ds,Pg}=D;
+function render(){if(SY.locked())return SY.lockScreen();const D=compute();LAST=D;const{o,G,NC,U,A,Ds,Pg}=D;
 const T=[["scad","Da avvisare",nCli(G),I.list,"Avvisare","#2F6BFF"],["urg","Urgenti",nCli(U),I.bolt,"Urgenti","#FF5A36"],["arch","Archivio avvisati",A.length,I.arch,"Archivio","#10B866"],["pag","Già pagati",nCli(Pg),I.paid,"Pagati","#16A34A"],["dis","Disdettati",nCli(Ds),I.ban,"Disdette","#8B7CF6"],["nc","Non contattare",nCli(NC),I.userx,"Esclusi","#EC4899"]];
 const navB=(t,mob)=>{const n=t[2];return `<button class="${mob?"":"nv "}${page===t[0]?"on":""}" data-act="page" data-p="${t[0]}" style="--nc:${t[5]}">${t[3]}<span>${mob?t[4]:t[1]}</span>${n?`<span class="n ${t[0]==="urg"?"hot":""}">${n}</span>`:(mob?"":'<span class="n z">0</span>')}</button>`};
 $("nav").innerHTML=T.map(t=>navB(t,false)).join("");$("bnav").innerHTML=T.map(t=>navB(t,true)).join("");
@@ -269,7 +269,7 @@ addEventListener("dragover",e=>e.preventDefault());
 addEventListener("drop",e=>{e.preventDefault();dragN=0;ov.style.display="none";if(e.dataTransfer.files.length)smista(e.dataTransfer.files)});
 $("q").oninput=render;
 const tick=()=>{if(themeMode()==="auto"){const o=document.documentElement.dataset.theme;applyTheme();if(document.documentElement.dataset.theme!==o)render()}};setInterval(tick,60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick()});
-$("th").onclick=toggleTheme;$("mn").onclick=()=>tool("menu");$("bkc").onclick=()=>SY.on()?SY.modal():backup();
+$("th").onclick=toggleTheme;$("mn").onclick=()=>tool("menu");$("bkc").onclick=()=>SY.modal();
 SY.init({get:()=>db,set:d=>{db=d},save:saveLocal,render:()=>{if($("mod").style.display!=="flex")render()},toast:(t)=>toast(t)});
 render()
 

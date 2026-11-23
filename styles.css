@@ -248,3 +248,8 @@ tr.det td{border-top:0;padding-top:0}
 }
 @media(max-width:380px){.c-top{flex-wrap:wrap}.c-amt{margin-left:auto}.bnav button{font-size:9.5px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* accesso riservato */
+body.locked .side,body.locked .top,body.locked .bnav{display:none!important}body.locked .app{display:block}body.locked .main{padding-top:24px}
+.unl{width:100%;height:50px;padding:0 16px;border:1px solid var(--ln);border-radius:14px;background:var(--sf2);font-size:16px}
+.unl:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 18%,transparent)}
