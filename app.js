@@ -48,6 +48,7 @@ play:sv('<path d="M6 4l14 8-14 8z"/>'),
 cal:sv('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 16l2 2 4-4"/>'),
 euro:sv('<path d="M18 6.5A7 7 0 107 17.5M4 10h9M4 14h9"/>'),
 user:sv('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>'),
+box:sv('<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/>'),
 sms:sv('<path d="M4 4h16v12H8l-4 4z"/>')};
 /* ===== stati ===== */
 const SC={"Doppio Quietanzamento":"#7C3AED","In Vigore":"#10B866","Scadenza a Breve":"#FFB400","In Tolleranza":"#FF7A1A","Fuori Copertura":"#F43F5E"};
@@ -81,6 +82,7 @@ return `<article class="card" style="--acc:${acc}"><div class="c-top">${chk(x,"u
 ${dqArchB(x)}${quando}${x.multi?multi(x,false):""}<div class="c-act"><button class="b c-or" data-act="undo" data-id="${esc(x.id)}">↩ Ripristina</button>${bPag(x)}${chBtn(x)}</div></article>`}
 function ncCard(x){return `<article class="card" style="--acc:#263644"><div class="ban-nc">🚷 NON CONTATTARE</div><div class="c-top"><div class="av" style="background:#263644">${esc(ini(x.cli))}</div><div class="c-id"><h3>${esc(x.cli)}</h3><p>${x.multi?"📑 Polizze multiple":esc(x.tip)} · scad. ${x.scad} (${gtxt(x)})</p></div><div class="c-amt">€ ${x.impf}</div></div>${x.multi?multi(x,false):""}<div class="c-pol">${x.tel?"+39 "+esc(x.tel)+" · ":""}${esc(x.email)}</div><div class="c-act"><button class="b c-grn" data-act="ncoff" data-id="${esc(x.id)}">↩ Riabilita contatto</button></div></article>`}
 function pagCard(p){const c=db.contacts[p.cod]||{};return `<article class="card"><div class="c-top"><div class="av" style="background:#16A34A">✅</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#16A34A;color:#fff">Già pagato</span><span class="m">📅 scadenza ${fd(fromISO(p.scad))}</span><span class="m">${p.notif?"📣 avvisato":"non avvisato"} · ${p.pag.man?"segnato pagato a mano":"uscito dall'Excel"} il ${fd(new Date(p.pag.ts))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div><div class="c-act"><button class="b c-or" data-act="unpag" data-k="${esc(p.key)}">↩ Non pagato</button></div></article>`}
+function archvCard(p){const c=db.contacts[p.cod]||{},g=Math.round((fromISO(p.scad)-oggi())/864e5);return `<article class="card" style="--acc:#64748B"><div class="c-top"><div class="av" style="background:#64748B">🗄</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#64748B;color:#fff">Archiviata</span><span class="m">📅 scadenza ${fd(fromISO(p.scad))} · ${gtxt({g})}</span><span class="m">archiviata il ${fd(new Date(p.arch.ts))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div><div class="c-act"><button class="b c-or" data-act="unarch" data-k="${esc(p.key)}">↩ Riporta in Da avvisare</button></div></article>`}
 function disCard(p){const c=db.contacts[p.cod]||{};return `<article class="card dis"><div class="c-top"><div class="av" style="background:#7A8798">🚫</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#7A8798;color:#fff">Disdettata / Stornata</span><span class="m">📅 ${fd(fromISO(p.scad))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div></article>`}
 /* ===== elenco (tabella) ===== */
 const th=(l,k,cls)=>`<th ${cls?`class="${cls}"`:""}><button data-act="sort" data-k="${k}">${l}${sk===k?(sd>0?" ▲":" ▼"):""}</button></th>`;
@@ -102,18 +104,19 @@ function raggruppaDQ(L){const out=[],done=new Set();L.forEach(x=>{if(done.has(x)
 L.filter(y=>!done.has(y)&&y.dq&&y.cod===x.cod).sort((a,b)=>a.imp-b.imp).forEach(y=>{done.add(y);out.push(y)})});return out}
 /* ===== dati ===== */
 function compute(){const o=oggi(),G=costruisciGruppi(db,o),NC=costruisciGruppi(db,o,true),nc=db.nc||{};
-const rec=costruisciGruppi({...db,pol:db.pol.filter(p=>{if(!p.notif||p.notif.assoc||p.dis||p.pag||nc[p.cod])return false;const g=Math.round((fromISO(p.scad)-o)/864e5);return g<=-10&&(p.storia&&p.storia.length?p.storia:[p.notif]).length<2}).map(p=>({...p,notif:null}))},o).map(x=>({...x,ric:true}));
+const rec=costruisciGruppi({...db,pol:db.pol.filter(p=>{if(!p.notif||p.notif.assoc||p.dis||p.pag||p.arch||nc[p.cod])return false;const g=Math.round((fromISO(p.scad)-o)/864e5);return g<=-10&&(p.storia&&p.storia.length?p.storia:[p.notif]).length<2}).map(p=>({...p,notif:null}))},o).map(x=>({...x,ric:true}));
 const U=G.filter(x=>x.urg).concat(rec),G2=G.concat(rec),A=costruisciArchivio(db).map(x=>({...x,id:x.keys.join("~")})),Ds=db.pol.filter(p=>p.dis),Pg=db.pol.filter(p=>p.pag&&!p.dis);
 const ann=a=>a.forEach(x=>{if(!x.dq)return;const grp=G.filter(y=>y.dq&&y.cod===x.cod);if(grp.length<2)return;const im=grp.map(y=>y.imp),mx=Math.max(...im),mn=Math.min(...im);x.dqRole=mx===mn?"":x.imp===mx?"PREMIO PIÙ ALTO":x.imp===mn?"PREMIO PIÙ BASSO":"PREMIO INTERMEDIO"});ann(G);ann(U);
 /* «Da avvisare» comprende anche gli urgenti da ricontattare (2ª volta) */
-return{o,G:G2,NC,U,A,Ds,Pg}}
+const Ar=db.pol.filter(p=>p.arch&&!p.pag&&!p.dis);
+return{o,G:G2,NC,U,A,Ds,Pg,Ar}}
 const lv=x=>x.g+15<=5?"r":x.g<0?"o":"y";
 const sorter=(a,b)=>((a[sk]>b[sk]?1:a[sk]<b[sk]?-1:0)*sd)||a.cli.localeCompare(b.cli)||a.imp-b.imp;
-const PAGES={scad:["Da avvisare","Clienti con una scadenza ancora da comunicare"],urg:["Promemoria urgenti","Scadenze fino a domenica, già passate o con la tolleranza che sta per finire"],arch:["Archivio avvisati","Chi è stato avvisato, quando e con quale canale"],pag:["Già pagati","Polizze che non compaiono più nell'ultimo Excel caricato: risultano pagate"],dis:["Disdettati","Polizze disdettate o stornate, non vengono avvisate"],nc:["Non contattare","Clienti esclusi da ogni avviso"]};
+const PAGES={scad:["Da avvisare","Clienti con una scadenza ancora da comunicare"],urg:["Promemoria urgenti","Scadenze fino a domenica, già passate o con la tolleranza che sta per finire"],arch:["Archivio avvisati","Chi è stato avvisato, quando e con quale canale"],archv:["Archiviati","Scadenze messe da parte senza avvisare il cliente: puoi riportarle in Da avvisare quando vuoi"],pag:["Già pagati","Polizze che non compaiono più nell'ultimo Excel caricato: risultano pagate"],dis:["Disdettati","Polizze disdettate o stornate, non vengono avvisate"],nc:["Non contattare","Clienti esclusi da ogni avviso"]};
 const SORTS={scad:[["sortScad:1","Scadenza ↑ (più vicine)"],["sortScad:-1","Scadenza ↓ (più lontane)"],["imp:-1","Importo più alto"],["cli:1","Nome A–Z"]],arch:[["ts:-1","Più recenti"],["ts:1","Meno recenti"],["sortScad:1","Scadenza ↑"],["imp:-1","Importo più alto"],["cli:1","Nome A–Z"]]};
 /* ===== render ===== */
-function render(){if(SY.locked())return SY.lockScreen();const D=compute();LAST=D;const{o,G,NC,U,A,Ds,Pg}=D;
-const T=[["scad","Da avvisare",nCli(G),I.list,"Avvisare","#2F6BFF"],["urg","Urgenti",nCli(U),I.bolt,"Urgenti","#FF5A36"],["arch","Archivio avvisati",A.length,I.arch,"Archivio","#10B866"],["pag","Già pagati",nCli(Pg),I.paid,"Pagati","#16A34A"],["dis","Disdettati",nCli(Ds),I.ban,"Disdette","#8B7CF6"],["nc","Non contattare",nCli(NC),I.userx,"Esclusi","#EC4899"]];
+function render(){if(SY.locked())return SY.lockScreen();const D=compute();LAST=D;const{o,G,NC,U,A,Ds,Pg,Ar}=D;
+const T=[["scad","Da avvisare",nCli(G),I.list,"Avvisare","#2F6BFF"],["urg","Urgenti",nCli(U),I.bolt,"Urgenti","#FF5A36"],["arch","Archivio avvisati",A.length,I.arch,"Avvisati","#10B866"],["pag","Già pagati",nCli(Pg),I.paid,"Pagati","#16A34A"],["archv","Archiviati",nCli(Ar),I.box,"Archiviati","#64748B"],["dis","Disdettati",nCli(Ds),I.ban,"Disdette","#8B7CF6"],["nc","Non contattare",nCli(NC),I.userx,"Esclusi","#EC4899"]];
 const navB=(t,mob)=>{const n=t[2];return `<button class="${mob?"":"nv "}${page===t[0]?"on":""}" data-act="page" data-p="${t[0]}" style="--nc:${t[5]}">${t[3]}<span>${mob?t[4]:t[1]}</span>${n?`<span class="n ${t[0]==="urg"?"hot":""}">${n}</span>`:(mob?"":'<span class="n z">0</span>')}</button>`};
 $("nav").innerHTML=T.map(t=>navB(t,false)).join("");$("bnav").innerHTML=T.map(t=>navB(t,true)).join("");
 SY.chip();
@@ -151,6 +154,7 @@ if(!CUR.length)h+=empty("🗂️","Nessun cliente avvisato","Quando segni un cli
 else{const flat=sk==="ts"&&sd===-1?secArch(CUR):[{items:CUR}];h+=VIEW==="table"?tabella(flat,true):schede(flat,archCard)}}
 else if(page==="nc"){CUR=NC.filter(match).sort(sorter);CUR.forEach(x=>IDX.set(x.id,x));h+=head("")+(CUR.length?`<div class="cards">${CUR.map(ncCard).join("")}</div>`:empty("🚷","Nessun cliente escluso","Dal menu ⋯ di una scheda puoi escludere un cliente dagli avvisi."))}
 else if(page==="pag"){const L=Pg.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?1:a.scad>b.scad?-1:0));CUR=[];h+=head("")+(L.length?`<div class="cards">${L.map(pagCard).join("")}</div>`:empty("✅","Nessuna polizza pagata","Quando carichi un nuovo Excel, le polizze che non ci sono più finiscono qui."))}
+else if(page==="archv"){const L=Ar.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?-1:a.scad>b.scad?1:0));CUR=[];h+=head("")+(L.length?`<div class="cards">${L.map(archvCard).join("")}</div>`:empty("🗄️","Nessuna scadenza archiviata","Dal menu ⋯ di una scheda puoi archiviarla senza avvisare il cliente."))}
 else{const L=Ds.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?-1:a.scad>b.scad?1:0));CUR=[];h+=head("")+(L.length?`<div class="cards">${L.map(disCard).join("")}</div>`:empty("✅","Nessuna polizza disdettata"))}
 m.innerHTML=h}
 /* ===== modali ===== */
@@ -198,15 +202,19 @@ case"tool":return tool(el.dataset.t);
 case"focus":FQ=CUR.slice();FI=0;if(!FQ.length)return toast("Nessun cliente in coda");return focusShow();
 case"fdone":if(!FCH)return toast("Apri prima WhatsApp, Email o SMS");{const X=FQ[FI],c=FCH;finX(X,c,true);toast("Archiviato: "+X.cli+" ("+CAN[c][0]+")");FI++;return focusShow()}
 case"fskip":FI++;return focusShow();
+case"unarch":{const p=db.pol.find(q=>q.key===el.dataset.k);if(!p)return;const old=p.arch;delete p.arch;save();render();return toast("Riportata in Da avvisare: "+p.cli,()=>{p.arch=old;save();render()})}
 case"unpag":{const p=db.pol.find(q=>q.key===el.dataset.k);if(!p)return;const old=p.pag;delete p.pag;save();render();return toast("Riportato tra le scadenze: "+p.cli,()=>{p.pag=old;save();render()})}
 }
 if(!x&&t!=="undo2")return;
 switch(t){
+case"archx":{const ks=new Set(x.keys||[]),L=db.pol.filter(p=>ks.has(p.key)&&!p.arch),ts=Date.now();if(!L.length)return;
+L.forEach(p=>p.arch={ts});save();$("mod").style.display="none";$("mod").className="";render();
+return toast("🗄 "+x.cli+" archiviato (lo trovi in Archiviati)",()=>{L.forEach(p=>delete p.arch);save();render()})}
 case"pag":{const ks=new Set(x.keys||[]),L=db.pol.filter(p=>ks.has(p.key)&&!p.pag),ts=Date.now();if(!L.length)return;
 L.forEach(p=>p.pag={ts,man:true});save();$("mod").style.display="none";$("mod").className="";render();
 return toast("✅ "+x.cli+" segnato come pagato",()=>{L.forEach(p=>delete p.pag);save();render()})}
 case"more":{const pv=msgText(x),ck=chBtn(x);
-return modal(`<h3>${esc(x.cli)}</h3><p>${x.multi?"Polizze multiple":esc(x.tip)} · € ${x.impf}</p>${pv?`<div class="pv">${esc(pv)}</div><button class="b c-grn" data-act="copy" data-id="${esc(id)}">📋 Copia messaggio</button>`:""}${x.sms?`<a class="b c-sms" href="${esc(x.sms)}">${I.sms}Invia SMS</a>`:""}<button class="b c-ind" data-act="ct" data-id="${esc(id)}">✏️ Modifica contatti</button>${ck}<button class="b c-pag" data-act="pag" data-id="${esc(id)}">✅ Segna come pagato</button><button class="b c-nc" data-act="nc" data-id="${esc(id)}">🚷 Non contattare</button><button class="b c-gry" data-act="close">Chiudi</button>`)}
+return modal(`<h3>${esc(x.cli)}</h3><p>${x.multi?"Polizze multiple":esc(x.tip)} · € ${x.impf}</p>${pv?`<div class="pv">${esc(pv)}</div><button class="b c-grn" data-act="copy" data-id="${esc(id)}">📋 Copia messaggio</button>`:""}${x.sms?`<a class="b c-sms" href="${esc(x.sms)}">${I.sms}Invia SMS</a>`:""}<button class="b c-ind" data-act="ct" data-id="${esc(id)}">✏️ Modifica contatti</button>${ck}<button class="b c-pag" data-act="pag" data-id="${esc(id)}">✅ Segna come pagato</button><button class="b c-gry" data-act="archx" data-id="${esc(id)}">🗄 Archivia senza avvisare</button><button class="b c-nc" data-act="nc" data-id="${esc(id)}">🚷 Non contattare</button><button class="b c-gry" data-act="close">Chiudi</button>`)}
 case"copy":return copia(msgText(x));
 case"chk":return modal(`<h3>Come hai avvisato<br>${esc(x.cli)}?</h3><button class="b c-wa" data-act="fin" data-id="${esc(id)}" data-c="whatsapp">${I.chat}WhatsApp</button><button class="b c-em" data-act="fin" data-id="${esc(id)}" data-c="email">${I.mail}Email</button><button class="b c-sms" data-act="fin" data-id="${esc(id)}" data-c="sms">${I.sms}SMS</button><button class="b c-gry" data-act="close">Annulla</button>`);
 case"fin":return fin(id,el.dataset.c);

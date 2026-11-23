@@ -99,7 +99,7 @@ const dq=!!p.dq,st=dq?"Doppio Quietanzamento":p.st;
 const ric=p.st==="Fuori Copertura"||(p.g<0&&p.g+15<=5);
 return{keys:g.map(x=>x.key),id:g.map(x=>x.key).join("~"),cod:p.cod,cli:p.cli,imp:tot,impf:eurF(tot),tip,num,scad:fd(p.sc),sortScad:p.sc.getTime(),g:p.g,st,stReal:p.st,col:COLORI[st],dq,multi,details:g.map(z=>({nome:z.nome,num:z.num,imp:z.imp,scad:fd(z.sc),...lk(z)})),
 tel,email,wa:tel?`whatsapp://send?phone=39${tel}&text=${enc(mw)}`:"",sms:tel?`sms:+39${tel}?&body=${enc(me)}`:"",mail:email?`mailto:${email}?subject=Scadenza%20polizza&body=${enc(me)}`:"",urg:p.g<=finoDom,ric}}
-function costruisciGruppi(db,oggi,solo){const NCm=db.nc||{};const P=db.pol.filter(p=>!p.dis&&!p.pag&&!p.notif&&(solo?!!NCm[p.cod]:!NCm[p.cod])).map(p=>{const sc=fromISO(p.scad),g=Math.round((sc-oggi)/864e5);return{...p,sc,g,tol:addD(sc,15),st:stato(g)}});
+function costruisciGruppi(db,oggi,solo){const NCm=db.nc||{};const P=db.pol.filter(p=>!p.dis&&!p.pag&&!p.arch&&!p.notif&&(solo?!!NCm[p.cod]:!NCm[p.cod])).map(p=>{const sc=fromISO(p.scad),g=Math.round((sc-oggi)/864e5);return{...p,sc,g,tol:addD(sc,15),st:stato(g)}});
 const finoDom=6-((oggi.getDay()+6)%7),B=[],gr={};P.forEach(p=>{if(p.dq)B.push([p]);else(gr[p.cod]=gr[p.cod]||[]).push(p)});Object.values(gr).forEach(g=>B.push(g));
 return B.map(g=>creaGruppo(g,db.contacts||{},finoDom)).sort((a,b)=>a.g-b.g)}
 function costruisciArchivio(db){const m={};db.pol.filter(p=>p.notif).forEach(p=>{const k=p.dq?p.key:p.cod+"|"+p.notif.ts;(m[k]=m[k]||[]).push(p)});
