@@ -185,7 +185,7 @@ modal(`<div class="fq-h"><span>${FI+1} / ${FQ.length}</span><div class="pb"><i s
 <div class="fq-b" style="--acc:${acc}"><div class="av" style="background:${acc}">${esc(ini(x.cli))}</div><h2>${esc(x.cli)}</h2><div class="am">€ ${x.impf}</div><div>${pill(x)}</div>
 <p>${x.multi?"📑 Polizze multiple · "+x.details.length:esc(x.tip)}</p><p>📅 ${x.scad} · <b>${gtxt(x)}</b></p>${tolBar(x)}</div>
 <div class="fq-a">${x.wa?`<a class="b c-wa" href="${esc(x.wa)}" data-ch="whatsapp">${I.chat}WhatsApp</a>`:`<span class="b off">WhatsApp</span>`}${x.mail?`<a class="b c-em" href="${esc(x.mail)}" data-ch="email">${I.mail}Email</a>`:`<span class="b off">Email</span>`}${x.sms?`<a class="b c-sms" href="${esc(x.sms)}" data-ch="sms">${I.sms}SMS</a>`:`<span class="b off">SMS</span>`}</div>
-<button class="b c-grn" id="fdone" data-act="fdone" style="opacity:.55">✅ Fatto (apri prima un canale)</button><button class="b c-gry" data-act="fskip">Salta →</button>`,"focus")}
+<button class="b c-grn" id="fdone" data-act="fdone" style="opacity:.55">✅ Fatto (apri prima un canale)</button><div class="fq-2"><button class="b c-gry" data-act="farch">🗄 Archivia</button><button class="b c-gry" data-act="fskip">Salta →</button></div>`,"focus")}
 /* azioni a click */
 function act(t,id,j,el){const x=id?IDX.get(id):null;
 switch(t){
@@ -202,6 +202,8 @@ case"tool":return tool(el.dataset.t);
 case"focus":FQ=CUR.slice();FI=0;if(!FQ.length)return toast("Nessun cliente in coda");return focusShow();
 case"fdone":if(!FCH)return toast("Apri prima WhatsApp, Email o SMS");{const X=FQ[FI],c=FCH;finX(X,c,true);toast("Archiviato: "+X.cli+" ("+CAN[c][0]+")");FI++;return focusShow()}
 case"fskip":FI++;return focusShow();
+case"farch":{const X=FQ[FI];if(!X)return;const ks=new Set(X.keys||[]),L=db.pol.filter(p=>ks.has(p.key)&&!p.arch),ts=Date.now();L.forEach(p=>p.arch={ts});save();render();
+toast("🗄 "+X.cli+" archiviato (lo trovi in Archiviati)",()=>{L.forEach(p=>delete p.arch);save();render()});FI++;return focusShow()}
 case"unarch":{const p=db.pol.find(q=>q.key===el.dataset.k);if(!p)return;const old=p.arch;delete p.arch;save();render();return toast("Riportata in Da avvisare: "+p.cli,()=>{p.arch=old;save();render()})}
 case"unpag":{const p=db.pol.find(q=>q.key===el.dataset.k);if(!p)return;const old=p.pag;delete p.pag;save();render();return toast("Riportato tra le scadenze: "+p.cli,()=>{p.pag=old;save();render()})}
 }

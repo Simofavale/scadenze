@@ -253,3 +253,5 @@ tr.det td{border-top:0;padding-top:0}
 body.locked .side,body.locked .top,body.locked .bnav{display:none!important}body.locked .app{display:block}body.locked .main{padding-top:24px}
 .unl{width:100%;height:50px;padding:0 16px;border:1px solid var(--ln);border-radius:14px;background:var(--sf2);font-size:16px}
 .unl:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 18%,transparent)}
+
+.fq-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fq-2 .b{margin-top:10px}
