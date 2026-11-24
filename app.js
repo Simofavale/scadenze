@@ -54,6 +54,7 @@ return `<div class="tol"><div class="tl2"><i style="width:${Math.round(u/15*100)
 /* ===== bottoni contatto ===== */
 const bWA=(x,c)=>x.wa?`<a class="b c-wa" href="${esc(x.wa)}" data-ch="whatsapp" ${c?'title="WhatsApp"':""}>${I.chat}${c?"":"WhatsApp"}</a>`:`<button class="b c-add" data-act="ct" data-id="${esc(x.id)}">${c?"+ Tel":"+ Telefono"}</button>`;
 const bEM=(x,c)=>x.mail?`<a class="b c-em" href="${esc(x.mail)}" data-ch="email" ${c?'title="Email"':""}>${I.mail}${c?"":"Email"}</a>`:`<button class="b c-add" data-act="ct" data-id="${esc(x.id)}">+ Email</button>`;
+const bAvv=x=>`<button class="b c-grn" title="Hai già avvisato il cliente: scegli il canale e va in Archivio avvisati" data-act="${x.rec?"ric":"chk"}" data-id="${esc(x.id)}">📣 ${x.rec?"Ricontattato":"Avvisato"}</button>`;
 const bMore=x=>`<button class="b c-gry ic2" title="Altre azioni" data-act="more" data-id="${esc(x.id)}">${I.more}</button>`;
 const ricB=x=>x.ric?`<button class="ric" data-act="ric" data-id="${esc(x.id)}">📞 Ricontattare (2ª volta)</button>`:"";
 const chk=(x,a,on)=>`<label class="chk" title="${on?"Togli la spunta per riportare da avvisare":"Segna come avvisato"}"><input type="checkbox" data-act="${a}" data-id="${esc(x.id)}" ${on?"checked":""}><span class="bx">${I.check}</span></label>`;
@@ -66,7 +67,7 @@ return `<article class="card" style="--acc:${acc}"><div class="c-top">${chk(x,"c
 ${x.dq?'<div class="dq">DOPPIO QUIETANZAMENTO</div>'+(x.dqRole?`<div class="dqrole">💶 ${x.dqRole} · inviandone una, l'altra va in archivio</div>`:""):""}
 <div class="c-meta">${pill(x)}<span class="m">📅 ${x.scad}</span><span class="m g">${gtxt(x)}</span>${x.urg&&page==="scad"?'<span class="urgb">❗ Urgente</span>':""}</div>${tolBar(x)}
 ${x.multi?multi(x,true):`<div class="c-pol">Polizza n. ${esc(x.num)}${x.dq?" · "+esc(x.stReal):""}</div>`}${ricB(x)}
-<div class="c-act">${bWA(x)}${bEM(x)}${bPag(x)}${bMore(x)}</div></article>`}
+<div class="c-act">${bWA(x)}${bEM(x)}${bMore(x)}</div><div class="c-act c-act2">${bAvv(x)}${bPag(x)}</div></article>`}
 const bPag=x=>`<button class="b c-pag" title="Il cliente ha già pagato: esce dalle scadenze e va in Già pagati" data-act="pag" data-id="${esc(x.id)}">✅ Pagato</button>`;
 const dqArchB=x=>{if(!x.dqPair)return"";const r=x.aum===true?"📈 POLIZZA IN AUMENTO":x.aum===false?"POLIZZA PRECEDENTE":"POLIZZA";return `<div class="dq" style="background:${x.inviata?"#00695C":"#B71C1C"}">⚠️ DOPPIO QUIETANZAMENTO · ${r} · ${x.inviata?"✅ INVIATA":"❌ NON INVIATA"}</div>`};
 function archCard(x){const c=CAN[x.canale]||[x.canale,"#555"],acc=x.dqPair?(x.inviata?"#00695C":"#B71C1C"):"#10B866";
@@ -96,12 +97,15 @@ L.forEach(x=>{const k=x.dq?"dq":x.stReal;(m[k]=m[k]||[]).push(x)});return def.fi
 function secArch(L){const o=oggi(),ie=addD(o,-1),m=new Map();L.forEach(x=>{const d=new Date(x.ts),dd=new Date(d.getFullYear(),d.getMonth(),d.getDate()),k=isoD(dd);if(!m.has(k))m.set(k,{t:dd.getTime()===o.getTime()?"Oggi":dd.getTime()===ie.getTime()?"Ieri":dataLunga(k),c:"#10B866",items:[]});m.get(k).items.push(x)});return [...m.values()]}
 function raggruppaDQ(L){const out=[],done=new Set();L.forEach(x=>{if(done.has(x))return;if(!x.dq){done.add(x);out.push(x);return}
 L.filter(y=>!done.has(y)&&y.dq&&y.cod===x.cod).sort((a,b)=>a.imp-b.imp).forEach(y=>{done.add(y);out.push(y)})});return out}
+const autoP=x=>(x.keys||[]).map(k=>db.pol.find(p=>p.key===k)).filter(p=>p&&(p.targa||/^auto\b/i.test(p.nome||"")));
+const parseImp=v=>{v=String(v).replace(/[€\s]/g,"");if(v.includes(","))v=v.replace(/\./g,"").replace(",",".");return Math.round(parseFloat(v)*100)/100};
 /* ===== dati ===== */
 function compute(){const o=oggi(),G=costruisciGruppi(db,o),NC=costruisciGruppi(db,o,true),nc=db.nc||{};
-const rec=costruisciGruppi({...db,pol:db.pol.filter(p=>{if(!p.notif||p.notif.assoc||p.dis||p.pag||p.arch||nc[p.cod])return false;const g=Math.round((fromISO(p.scad)-o)/864e5);return g<=-10&&(p.storia&&p.storia.length?p.storia:[p.notif]).length<2}).map(p=>({...p,notif:null}))},o).map(x=>({...x,ric:true}));
-const U=G.filter(x=>x.urg).concat(rec),G2=G.concat(rec),A=costruisciArchivio(db).map(x=>({...x,id:x.keys.join("~")})),Ds=db.pol.filter(p=>p.dis),Pg=db.pol.filter(p=>p.pag&&!p.dis);
+const rec=costruisciGruppi({...db,pol:db.pol.filter(p=>{if(!p.notif||p.notif.assoc||p.dis||p.pag||p.arch||nc[p.cod])return false;const g=Math.round((fromISO(p.scad)-o)/864e5);return g<0&&(p.storia&&p.storia.length?p.storia:[p.notif]).length<2}).map(p=>({...p,notif:null}))},o).map(x=>({...x,ric:true,rec:true}));
+const U=G.filter(x=>x.urg).concat(rec),G2=G,A=costruisciArchivio(db).filter(x=>!x.assoc).map(x=>({...x,id:x.keys.join("~")})),Ds=db.pol.filter(p=>p.dis),Pg=db.pol.filter(p=>p.pag&&!p.dis);
 const ann=a=>a.forEach(x=>{if(!x.dq)return;const grp=G.filter(y=>y.dq&&y.cod===x.cod);if(grp.length<2)return;const im=grp.map(y=>y.imp),mx=Math.max(...im),mn=Math.min(...im);x.dqRole=mx===mn?"":x.imp===mx?"PREMIO PIÙ ALTO":x.imp===mn?"PREMIO PIÙ BASSO":"PREMIO INTERMEDIO"});ann(G);ann(U);
-/* «Da avvisare» comprende anche gli urgenti da ricontattare (2ª volta) */
+/* Avvisati già scaduti e ancora nell'elenco (non pagati): restano in Archivio avvisati e vanno anche in Urgenti per il ricontatto.
+   Doppio quietanzamento già avvisato: in Archivio avvisati si vede solo la polizza scelta. */
 const Ar=db.pol.filter(p=>p.arch&&!p.pag&&!p.dis);
 return{o,G:G2,NC,U,A,Ds,Pg,Ar}}
 const lv=x=>x.g+15<=5?"r":x.g<0?"o":"y";
@@ -241,8 +245,12 @@ case"pag":{const ks=new Set(x.keys||[]),L=db.pol.filter(p=>ks.has(p.key)&&!p.pag
 L.forEach(p=>p.pag={ts,man:true});save();$("mod").style.display="none";$("mod").className="";render();
 return toast("✅ "+x.cli+" segnato come pagato",()=>{L.forEach(p=>delete p.pag);save();render()})}
 case"more":{const pv=msgText(x),ck=chBtn(x);
-return modal(`<h3>${esc(x.cli)}</h3><p>${x.multi?"Polizze multiple":esc(x.tip)} · € ${x.impf}</p>${pv?`<div class="pv">${esc(pv)}</div><button class="b c-grn" data-act="copy" data-id="${esc(id)}">📋 Copia messaggio</button>`:""}${x.sms?`<a class="b c-sms" href="${esc(x.sms)}">${I.sms}Invia SMS</a>`:""}<button class="b c-ind" data-act="ct" data-id="${esc(id)}">✏️ Modifica contatti</button>${ck}<button class="b c-pag" data-act="pag" data-id="${esc(id)}">✅ Segna come pagato</button><button class="b c-gry" data-act="archx" data-id="${esc(id)}">🗄 Archivia senza avvisare</button><button class="b c-nc" data-act="nc" data-id="${esc(id)}">🚷 Non contattare</button><button class="b c-gry" data-act="close">Chiudi</button>`)}
+return modal(`<h3>${esc(x.cli)}</h3><p>${x.multi?"Polizze multiple":esc(x.tip)} · € ${x.impf}</p>${pv?`<div class="pv">${esc(pv)}</div><button class="b c-grn" data-act="copy" data-id="${esc(id)}">📋 Copia messaggio</button>`:""}${x.sms?`<a class="b c-sms" href="${esc(x.sms)}">${I.sms}Invia SMS</a>`:""}<button class="b c-ind" data-act="ct" data-id="${esc(id)}">✏️ Modifica contatti</button>${autoP(x).length?`<button class="b c-ind" data-act="imp" data-id="${esc(id)}">💶 Cambia importo polizza auto</button>`:""}${ck}<button class="b c-pag" data-act="pag" data-id="${esc(id)}">✅ Segna come pagato</button><button class="b c-gry" data-act="archx" data-id="${esc(id)}">🗄 Archivia senza avvisare</button><button class="b c-nc" data-act="nc" data-id="${esc(id)}">🚷 Non contattare</button><button class="b c-gry" data-act="close">Chiudi</button>`)}
 case"copy":return copia(msgText(x));
+case"imp":{const L=autoP(x);if(!L.length)return;return modal(`<h3>💶 Importo polizza auto</h3><p>${esc(x.cli)}</p>${L.map(p=>`<label>${esc(p.nome)} · n. ${esc(p.num)}${p.impOrig!=null?` <small>(dall'elenco: € ${eurF(p.impOrig)})</small>`:""}<input class="impin" type="text" inputmode="decimal" data-k="${esc(p.key)}" value="${eurF(p.imp)}"></label>`).join("")}<p class="ts">Il messaggio al cliente userà il nuovo importo. Se ricarichi l'elenco, l'importo modificato resta.</p><button class="b c-grn" data-act="salvaimp" data-id="${esc(id)}">Salva importo</button><button class="b c-gry" data-act="close">Annulla</button>`)}
+case"salvaimp":{const V=[];for(const e of document.querySelectorAll(".impin")){const n=parseImp(e.value);if(!(n>0))return alert("Importo non valido: "+e.value);V.push([e.dataset.k,n])}
+let ch=0;V.forEach(([k,n])=>{const p=db.pol.find(q=>q.key===k);if(!p||Math.abs(p.imp-n)<0.005)return;if(p.impOrig==null)p.impOrig=p.imp;if(Math.abs(p.impOrig-n)<0.005)delete p.impOrig;p.imp=n;ch++});
+if(ch)save();chiudi();return toast(ch?"Importo aggiornato":"Nessuna modifica")}
 case"chk":return modal(`<h3>Come hai avvisato<br>${esc(x.cli)}?</h3><button class="b c-wa" data-act="fin" data-id="${esc(id)}" data-c="whatsapp">${I.chat}WhatsApp</button><button class="b c-em" data-act="fin" data-id="${esc(id)}" data-c="email">${I.mail}Email</button><button class="b c-sms" data-act="fin" data-id="${esc(id)}" data-c="sms">${I.sms}SMS</button><button class="b c-gry" data-act="close">Annulla</button>`);
 case"fin":return fin(id,el.dataset.c);
 case"ric":return modal(`<h3>Ricontatta ${esc(x.cli)}</h3><p>Scegli come aprire il messaggio precompilato.</p>${btnCh(x)}<p>Dopo aver inviato, registra il ricontatto:</p>${x.wa?`<button class="b c-grn" data-act="fin" data-id="${esc(id)}" data-c="whatsapp">✅ Inviato tramite WhatsApp</button>`:""}${x.mail?`<button class="b c-grn" data-act="fin" data-id="${esc(id)}" data-c="email">✅ Inviato tramite Email</button>`:""}<button class="b c-gry" data-act="close">Chiudi senza registrare</button>`);

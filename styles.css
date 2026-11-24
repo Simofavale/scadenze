@@ -128,7 +128,7 @@ h1,h2,h3{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI
 [data-theme=dark] .dqrole{color:#C4B5FD}
 .ric{display:block;width:100%;margin-top:12px;border:0;background:#E11D48;color:#fff;padding:10px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
 .c-pol{margin-top:12px;font-size:14px;color:var(--mu);font-weight:500}
-.c-act{display:flex;gap:8px;margin-top:16px}.c-act .b{flex:1}.c-act .b.ic2{flex:0 0 48px;padding:0}
+.c-act{display:flex;gap:8px;margin-top:16px}.c-act .b{flex:1}.c-act .b.ic2{flex:0 0 48px;padding:0}.c-act2{margin-top:8px}
 .multi{margin-top:12px;border:1px solid var(--ln);border-radius:14px;background:var(--sf2);overflow:hidden}
 .multi summary{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;cursor:pointer;font-size:14.5px;font-weight:700;list-style:none}.multi summary::-webkit-details-marker{display:none}
 .multi summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(45deg);margin:4px 2px 0 8px;transition:transform .2s}.multi[open] summary::after{transform:rotate(-135deg);margin-top:8px}
@@ -195,7 +195,7 @@ tr.det td{border-top:0;padding-top:0}
 @keyframes up{from{transform:translateY(24px);opacity:0}}
 .box h3{margin:0 0 8px;font-size:22px;letter-spacing:-.02em;line-height:1.2}.box p{margin:6px 0;color:var(--mu);font-size:15px}
 .box .b{width:100%;margin-top:10px}.box label{display:block;margin-top:12px;font-weight:650;font-size:14.5px}
-.box input[type=tel],.box input[type=email],.box input[type=text],.box input[type=password],.box input[type=url]{width:100%;margin-top:6px;height:48px;padding:0 14px;border:1px solid var(--ln);border-radius:12px;background:var(--sf2);font-size:16px}
+.box input[type=tel],.box input[type=email],.box input[type=text],.box input[type=password],.box input[type=url],.box input.impin{width:100%;margin-top:6px;height:48px;padding:0 14px;border:1px solid var(--ln);border-radius:12px;background:var(--sf2);font-size:16px}
 .box input:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 18%,transparent)}
 .box hr{border:0;border-top:1px solid var(--ln);margin:18px 0}.box .ts{font-size:13px;color:var(--mu)}
 .pv{white-space:pre-wrap;background:var(--sf2);border:1px solid var(--ln);border-radius:14px;padding:12px 14px;font-size:14px;max-height:230px;overflow:auto;margin:12px 0 2px;font-weight:500}

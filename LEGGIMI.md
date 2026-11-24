@@ -32,6 +32,10 @@ Nella nuova app › **♻️ Importa backup** e scegli quel file (va bene anche 
 - **Già pagati:** a ogni nuovo elenco scadenze caricato (1–2 volte a settimana), le polizze che non ci sono più
   (con scadenza entro l'ultima dell'elenco) passano in Già pagati, raggruppate per data dell'elenco.
 - **Archiviati** contiene le scadenze archiviate e i clienti da non contattare (non c'è più la voce Esclusi).
+- **Avvisati:** se ricompaiono nel nuovo elenco restano in Archivio avvisati; se la scadenza è passata (e non risultano
+  pagati) compaiono anche in Urgenti con «Ricontattato», finché non registri il 2° contatto.
+- **Doppio quietanzamento già avvisato:** si vede solo la polizza scelta (in Da avvisare e in Archivio avvisati).
+- **Importo auto:** menu ⋯ › «Cambia importo polizza auto»; l'importo modificato resta anche ricaricando l'elenco.
 - **Tema automatico:** segue chiaro/scuro di iPhone e Mac (su iPhone: Impostazioni › Schermo › Automatico = alba/tramonto).
 
 ## File
