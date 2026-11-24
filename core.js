@@ -128,4 +128,5 @@ for(const c of cods){const a=(L.nc||{})[c],b=(R.nc||{})[c],on=Math.max(t(a),t(b)
 if(on>ra&&on>of)nc[c]=t(a)>=t(b)?a:b;else if(of>ra)off[c]=of}
 const rep=[L.lastReport,R.lastReport].filter(Boolean).sort((a,b)=>(b.ts||0)-(a.ts||0))[0]||null;
 const bk=[L.lastBackup,R.lastBackup].filter(Boolean).sort().pop()||null;
-return{...R,...L,v:2,pol:[...m.values()],contacts:ct,nc,ncOff:off,lastReport:rep,lastBackup:bk,resetAt:ra||undefined}}
+const dr=[L.drive,R.drive].filter(Boolean).sort((a,b)=>(b.ts||0)-(a.ts||0))[0]; /* collegamento Google Drive: vince il più recente */
+return{...R,...L,v:2,pol:[...m.values()],contacts:ct,nc,ncOff:off,lastReport:rep,lastBackup:bk,resetAt:ra||undefined,drive:dr||undefined}}

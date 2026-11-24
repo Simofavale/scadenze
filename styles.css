@@ -195,7 +195,7 @@ tr.det td{border-top:0;padding-top:0}
 @keyframes up{from{transform:translateY(24px);opacity:0}}
 .box h3{margin:0 0 8px;font-size:22px;letter-spacing:-.02em;line-height:1.2}.box p{margin:6px 0;color:var(--mu);font-size:15px}
 .box .b{width:100%;margin-top:10px}.box label{display:block;margin-top:12px;font-weight:650;font-size:14.5px}
-.box input[type=tel],.box input[type=email],.box input[type=text],.box input[type=password]{width:100%;margin-top:6px;height:48px;padding:0 14px;border:1px solid var(--ln);border-radius:12px;background:var(--sf2);font-size:16px}
+.box input[type=tel],.box input[type=email],.box input[type=text],.box input[type=password],.box input[type=url]{width:100%;margin-top:6px;height:48px;padding:0 14px;border:1px solid var(--ln);border-radius:12px;background:var(--sf2);font-size:16px}
 .box input:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 18%,transparent)}
 .box hr{border:0;border-top:1px solid var(--ln);margin:18px 0}.box .ts{font-size:13px;color:var(--mu)}
 .pv{white-space:pre-wrap;background:var(--sf2);border:1px solid var(--ln);border-radius:14px;padding:12px 14px;font-size:14px;max-height:230px;overflow:auto;margin:12px 0 2px;font-weight:500}

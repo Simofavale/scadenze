@@ -7,23 +7,17 @@ db.nc=db.nc||{};
 let page="scad",sk="sortScad",sd=1,CUR=[],LAST=null,UNDO=null;const FLT={scad:"",urg:"",arch:""},IDX=new Map(),OPEN=new Set();
 let VIEW=(()=>{try{return localStorage.getItem("vista")||"cards"}catch(e){return"cards"}})();
 const saveLocal=()=>{try{localStorage.setItem(DBK,JSON.stringify(db))}catch(e){alert("Impossibile salvare nel browser (spazio pieno). Scarica subito un backup.")}};
-const save=()=>{SY.stamp(db);saveLocal();SY.later()};
+const save=()=>{SY.stamp(db);saveLocal();SY.later();DR.dopo()};
 const CAN={whatsapp:["WhatsApp","#0FA45A"],email:["Email","#2F6BFF"],sms:["SMS","#A33CF0"]};
 const nCli=a=>new Set(a.map(x=>x.cod)).size;
 const fdt=ts=>{const d=new Date(ts);return d.toLocaleDateString("it-IT")+" alle "+d.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"})};
 const gtxt=x=>x.g<0?"scaduta da "+(-x.g)+" gg":x.g===0?"scade oggi":"tra "+x.g+" gg";
-/* ===== tema (auto: alba/tramonto di Bra, calcolato offline) ===== */
-const LAT=44.70,LON=7.85;
-function sunTimes(now){const R=Math.PI/180,jd=now/864e5+2440587.5,n=Math.round(jd-2451545+0.0008),js=n-LON/360,M=((357.5291+0.98560028*js)%360+360)%360,
-C=1.9148*Math.sin(M*R)+0.02*Math.sin(2*M*R)+0.0003*Math.sin(3*M*R),L=(M+C+180+102.9372)%360,jt=2451545+js+0.0053*Math.sin(M*R)-0.0069*Math.sin(2*L*R),
-sd=Math.sin(L*R)*Math.sin(23.44*R),cd=Math.cos(Math.asin(sd)),cw=(Math.sin(-0.833*R)-Math.sin(LAT*R)*sd)/(Math.cos(LAT*R)*cd),w=Math.acos(Math.max(-1,Math.min(1,cw)))/R,
-t=j=>new Date((j-2440587.5)*864e5);return{alba:t(jt-w/360),tramonto:t(jt+w/360)}}
-const hhmm=d=>p2(d.getHours())+":"+p2(d.getMinutes());
+/* ===== tema (auto: segue il chiaro/scuro dell'iPhone o del Mac; su iPhone «Automatico» = alba/tramonto) ===== */
+const MQ=matchMedia("(prefers-color-scheme: dark)");
 const themeMode=()=>{try{const t=localStorage.getItem("scad_tema");return t==="light"||t==="dark"?t:"auto"}catch(e){return"auto"}};
-function autoDark(){const n=new Date(),s=sunTimes(n.getTime());return n<s.alba||n>s.tramonto}
-function applyTheme(){const m=themeMode(),t=m==="auto"?(autoDark()?"dark":"light"):m;document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=m}
+function applyTheme(){const m=themeMode(),t=m==="auto"?(MQ.matches?"dark":"light"):m;document.documentElement.dataset.theme=t;document.documentElement.dataset.mode=m}
 function toggleTheme(){const m=themeMode(),nx=m==="auto"?"light":m==="light"?"dark":"auto";try{nx==="auto"?localStorage.removeItem("scad_tema"):localStorage.setItem("scad_tema",nx)}catch(e){}applyTheme();render();
-if(nx==="auto"){const s=sunTimes(Date.now());toast("Tema automatico: scuro dopo il tramonto ("+hhmm(s.tramonto)+"), chiaro dall'alba ("+hhmm(s.alba)+")")}else toast("Tema "+(nx==="light"?"chiaro":"scuro")+" fisso")}
+toast(nx==="auto"?"Tema automatico: segue l'iPhone/Mac (chiaro o scuro)":"Tema "+(nx==="light"?"chiaro":"scuro")+" fisso")}
 applyTheme();
 /* ===== icone ===== */
 const sv=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -81,7 +75,7 @@ const quando=x.assoc?`<div class="c-pol">Archiviata insieme all'altra scheda · 
 return `<article class="card" style="--acc:${acc}"><div class="c-top">${chk(x,"undo2",true)}<div class="av" style="background:${acc}">${esc(ini(x.cli))}</div><div class="c-id"><h3>${esc(x.cli)}</h3><p>${x.multi?"📑 Polizze multiple":esc(x.tip)} · scad. ${x.scad}</p></div><div class="c-amt">€ ${x.impf}</div></div>
 ${dqArchB(x)}${quando}${x.multi?multi(x,false):""}<div class="c-act"><button class="b c-or" data-act="undo" data-id="${esc(x.id)}">↩ Ripristina</button>${bPag(x)}${chBtn(x)}</div></article>`}
 function ncCard(x){return `<article class="card" style="--acc:#263644"><div class="ban-nc">🚷 NON CONTATTARE</div><div class="c-top"><div class="av" style="background:#263644">${esc(ini(x.cli))}</div><div class="c-id"><h3>${esc(x.cli)}</h3><p>${x.multi?"📑 Polizze multiple":esc(x.tip)} · scad. ${x.scad} (${gtxt(x)})</p></div><div class="c-amt">€ ${x.impf}</div></div>${x.multi?multi(x,false):""}<div class="c-pol">${x.tel?"+39 "+esc(x.tel)+" · ":""}${esc(x.email)}</div><div class="c-act"><button class="b c-grn" data-act="ncoff" data-id="${esc(x.id)}">↩ Riabilita contatto</button></div></article>`}
-function pagCard(p){const c=db.contacts[p.cod]||{};return `<article class="card"><div class="c-top"><div class="av" style="background:#16A34A">✅</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#16A34A;color:#fff">Già pagato</span><span class="m">📅 scadenza ${fd(fromISO(p.scad))}</span><span class="m">${p.notif?"📣 avvisato":"non avvisato"} · ${p.pag.man?"segnato pagato a mano":"uscito dall'Excel"} il ${fd(new Date(p.pag.ts))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div><div class="c-act"><button class="b c-or" data-act="unpag" data-k="${esc(p.key)}">↩ Non pagato</button></div></article>`}
+function pagCard(p){const c=db.contacts[p.cod]||{};return `<article class="card"><div class="c-top"><div class="av" style="background:#16A34A">✅</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#16A34A;color:#fff">Già pagato</span><span class="m">📅 scadenza ${fd(fromISO(p.scad))}</span><span class="m">${p.notif?"📣 avvisato":"non avvisato"} · ${p.pag.man?"segnato pagato a mano":"non più nell'elenco"} il ${fd(new Date(p.pag.ts))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div><div class="c-act"><button class="b c-or" data-act="unpag" data-k="${esc(p.key)}">↩ Non pagato</button></div></article>`}
 function archvCard(p){const c=db.contacts[p.cod]||{},g=Math.round((fromISO(p.scad)-oggi())/864e5);return `<article class="card" style="--acc:#64748B"><div class="c-top"><div class="av" style="background:#64748B">🗄</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#64748B;color:#fff">Archiviata</span><span class="m">📅 scadenza ${fd(fromISO(p.scad))} · ${gtxt({g})}</span><span class="m">archiviata il ${fd(new Date(p.arch.ts))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div><div class="c-act"><button class="b c-or" data-act="unarch" data-k="${esc(p.key)}">↩ Riporta in Da avvisare</button></div></article>`}
 function disCard(p){const c=db.contacts[p.cod]||{};return `<article class="card dis"><div class="c-top"><div class="av" style="background:#7A8798">🚫</div><div class="c-id"><h3>${esc(p.cli)}</h3><p>${esc(p.nome)} · n. ${esc(p.num)}</p></div><div class="c-amt">€ ${eurF(p.imp)}</div></div><div class="c-meta"><span class="pill" style="background:#7A8798;color:#fff">Disdettata / Stornata</span><span class="m">📅 ${fd(fromISO(p.scad))}</span></div><div class="c-pol">${esc(c.tel?"+39 "+c.tel:p.tel?"+39 "+p.tel:"")} ${esc(c.email||p.email)}</div></article>`}
 /* ===== elenco (tabella) ===== */
@@ -112,11 +106,11 @@ const Ar=db.pol.filter(p=>p.arch&&!p.pag&&!p.dis);
 return{o,G:G2,NC,U,A,Ds,Pg,Ar}}
 const lv=x=>x.g+15<=5?"r":x.g<0?"o":"y";
 const sorter=(a,b)=>((a[sk]>b[sk]?1:a[sk]<b[sk]?-1:0)*sd)||a.cli.localeCompare(b.cli)||a.imp-b.imp;
-const PAGES={scad:["Da avvisare","Clienti con una scadenza ancora da comunicare"],urg:["Promemoria urgenti","Scadenze fino a domenica, già passate o con la tolleranza che sta per finire"],arch:["Archivio avvisati","Chi è stato avvisato, quando e con quale canale"],archv:["Archiviati","Scadenze messe da parte senza avvisare il cliente: puoi riportarle in Da avvisare quando vuoi"],pag:["Già pagati","Polizze che non compaiono più nell'ultimo Excel caricato: risultano pagate"],dis:["Disdettati","Polizze disdettate o stornate, non vengono avvisate"],nc:["Non contattare","Clienti esclusi da ogni avviso"]};
+const PAGES={scad:["Da avvisare","Clienti con una scadenza ancora da comunicare"],urg:["Promemoria urgenti","Scadenze fino a domenica, già passate o con la tolleranza che sta per finire"],arch:["Archivio avvisati","Chi è stato avvisato, quando e con quale canale"],archv:["Archiviati","Scadenze messe da parte e clienti da non contattare: puoi riportarli in Da avvisare quando vuoi"],pag:["Già pagati","Polizze che non sono più nell'elenco scadenze: a ogni nuovo elenco caricato, chi non c'è più risulta pagato"],dis:["Disdettati","Polizze disdettate o stornate, non vengono avvisate"],nc:["Non contattare","Clienti esclusi da ogni avviso"]};
 const SORTS={scad:[["sortScad:1","Scadenza ↑ (più vicine)"],["sortScad:-1","Scadenza ↓ (più lontane)"],["imp:-1","Importo più alto"],["cli:1","Nome A–Z"]],arch:[["ts:-1","Più recenti"],["ts:1","Meno recenti"],["sortScad:1","Scadenza ↑"],["imp:-1","Importo più alto"],["cli:1","Nome A–Z"]]};
 /* ===== render ===== */
 function render(){if(SY.locked())return SY.lockScreen();const D=compute();LAST=D;const{o,G,NC,U,A,Ds,Pg,Ar}=D;
-const T=[["scad","Da avvisare",nCli(G),I.list,"Avvisare","#2F6BFF"],["urg","Urgenti",nCli(U),I.bolt,"Urgenti","#FF5A36"],["arch","Archivio avvisati",A.length,I.arch,"Avvisati","#10B866"],["pag","Già pagati",nCli(Pg),I.paid,"Pagati","#16A34A"],["archv","Archiviati",nCli(Ar),I.box,"Archiviati","#64748B"],["dis","Disdettati",nCli(Ds),I.ban,"Disdette","#8B7CF6"],["nc","Non contattare",nCli(NC),I.userx,"Esclusi","#EC4899"]];
+const T=[["scad","Da avvisare",nCli(G),I.list,"Avvisare","#2F6BFF"],["urg","Urgenti",nCli(U),I.bolt,"Urgenti","#FF5A36"],["arch","Archivio avvisati",A.length,I.arch,"Avvisati","#10B866"],["pag","Già pagati",nCli(Pg),I.paid,"Pagati","#16A34A"],["archv","Archiviati",nCli(Ar)+nCli(NC),I.box,"Archiviati","#64748B"],["dis","Disdettati",nCli(Ds),I.ban,"Disdette","#8B7CF6"]];if(page==="nc")page="archv";
 const navB=(t,mob)=>{const n=t[2];return `<button class="${mob?"":"nv "}${page===t[0]?"on":""}" data-act="page" data-p="${t[0]}" style="--nc:${t[5]}">${t[3]}<span>${mob?t[4]:t[1]}</span>${n?`<span class="n ${t[0]==="urg"?"hot":""}">${n}</span>`:(mob?"":'<span class="n z">0</span>')}</button>`};
 $("nav").innerHTML=T.map(t=>navB(t,false)).join("");$("bnav").innerHTML=T.map(t=>navB(t,true)).join("");
 SY.chip();
@@ -153,8 +147,14 @@ h+=head(sortSel(SORTS.arch)+vw)+`<div class="chips">${chips.map(c=>`<button clas
 if(!CUR.length)h+=empty("🗂️","Nessun cliente avvisato","Quando segni un cliente come avvisato compare qui.");
 else{const flat=sk==="ts"&&sd===-1?secArch(CUR):[{items:CUR}];h+=VIEW==="table"?tabella(flat,true):schede(flat,archCard)}}
 else if(page==="nc"){CUR=NC.filter(match).sort(sorter);CUR.forEach(x=>IDX.set(x.id,x));h+=head("")+(CUR.length?`<div class="cards">${CUR.map(ncCard).join("")}</div>`:empty("🚷","Nessun cliente escluso","Dal menu ⋯ di una scheda puoi escludere un cliente dagli avvisi."))}
-else if(page==="pag"){const L=Pg.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?1:a.scad>b.scad?-1:0));CUR=[];h+=head("")+(L.length?`<div class="cards">${L.map(pagCard).join("")}</div>`:empty("✅","Nessuna polizza pagata","Quando carichi un nuovo Excel, le polizze che non ci sono più finiscono qui."))}
-else if(page==="archv"){const L=Ar.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?-1:a.scad>b.scad?1:0));CUR=[];h+=head("")+(L.length?`<div class="cards">${L.map(archvCard).join("")}</div>`:empty("🗄️","Nessuna scadenza archiviata","Dal menu ⋯ di una scheda puoi archiviarla senza avvisare il cliente."))}
+else if(page==="pag"){const L=Pg.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(b.pag.ts-a.pag.ts)||(a.cli.localeCompare(b.cli)));CUR=[];h+=head("");
+if(!L.length)h+=empty("✅","Nessuna polizza pagata","Quando carichi il nuovo elenco scadenze, chi non c'è più finisce qui.");
+else{const S=new Map();L.forEach(p=>{const k=(p.pag.man?"m":"x")+fd(new Date(p.pag.ts));if(!S.has(k))S.set(k,[]);S.get(k).push(p)});
+S.forEach((v,k)=>{h+=`<div class="sec" style="--c:#16A34A"><i></i>${k[0]==="m"?"Segnati pagati a mano il ":"Non più nell'elenco del "}${k.slice(1)}<em>${nCli(v)===1?"1 cliente":nCli(v)+" clienti"}</em></div><div class="cards">${v.map(pagCard).join("")}</div>`})}}
+else if(page==="archv"){const L=Ar.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?-1:a.scad>b.scad?1:0)),N=NC.filter(match).sort(sorter);CUR=N;N.forEach(x=>IDX.set(x.id,x));h+=head("");
+if(!L.length&&!N.length)h+=empty("🗄️","Nessuna scadenza archiviata","Dal menu ⋯ di una scheda puoi archiviarla senza avvisare il cliente, oppure mettere il cliente tra quelli da non contattare.");
+if(L.length)h+=`<div class="sec" style="--c:#64748B"><i></i>Scadenze archiviate<em>${nCli(L)===1?"1 cliente":nCli(L)+" clienti"}</em></div><div class="cards">${L.map(archvCard).join("")}</div>`;
+if(N.length)h+=`<div class="sec" style="--c:#EC4899"><i></i>Clienti da non contattare<em>${N.length}</em></div><div class="cards">${N.map(ncCard).join("")}</div>`}
 else{const L=Ds.filter(p=>(p.cli+" "+p.num+" "+p.nome).toLowerCase().includes(q)).sort((a,b)=>(a.scad<b.scad?-1:a.scad>b.scad?1:0));CUR=[];h+=head("")+(L.length?`<div class="cards">${L.map(disCard).join("")}</div>`:empty("✅","Nessuna polizza disdettata"))}
 m.innerHTML=h}
 /* ===== modali ===== */
@@ -253,7 +253,7 @@ db.contacts[x.cod]={tel,email:em};save();chiudi();return toast("Contatti salvati
 case"one":{const p=x.details&&x.details[+j];if(!p||!p.key)return;
 return modal(`<h3>Avvisa solo una polizza</h3><p>${esc(x.cli)}<br>${esc(p.nome)} · n. ${esc(p.num)} · € ${eurF(p.imp)}</p><p>Il messaggio riguarda solo questa polizza. Le altre restano da avvisare.</p>${btnCh(x,+j)}${p.sms?`<a class="b c-sms" href="${esc(p.sms)}">Apri SMS</a>`:""}<p>Dopo l'invio, registra:</p><button class="b c-grn" data-act="fin1" data-id="${esc(id)}" data-j="${+j}" data-c="whatsapp">✅ Inviato tramite WhatsApp</button><button class="b c-grn" data-act="fin1" data-id="${esc(id)}" data-j="${+j}" data-c="email">✅ Inviato tramite Email</button><button class="b c-grn" data-act="fin1" data-id="${esc(id)}" data-j="${+j}" data-c="sms">✅ Inviato tramite SMS</button><button class="b c-gry" data-act="close">Annulla</button>`)}
 case"fin1":return fin1(id,+j,el.dataset.c);
-case"nc":if(confirm("Non contattare più "+x.cli+"?\nTutte le sue scadenze escono da Da avvisare e Urgenti e vanno in Non contattare. Potrai riabilitarlo quando vuoi.")){db.nc=db.nc||{};const cod=x.cod;db.nc[cod]=new Date().toISOString();save();$("mod").style.display="none";$("mod").className="";render();toast("Spostato in Non contattare: "+x.cli,()=>{delete db.nc[cod];save();render()})}return;
+case"nc":if(confirm("Non contattare più "+x.cli+"?\nTutte le sue scadenze escono da Da avvisare e Urgenti e vanno in Archiviati › Clienti da non contattare. Potrai riabilitarlo quando vuoi.")){db.nc=db.nc||{};const cod=x.cod;db.nc[cod]=new Date().toISOString();save();$("mod").style.display="none";$("mod").className="";render();toast("Spostato in Archiviati (non contattare): "+x.cli,()=>{delete db.nc[cod];save();render()})}return;
 case"ncoff":delete db.nc[x.cod];save();render();return toast("Contatto riabilitato");
 case"undo2":if(!confirm("Riportare questa scheda in Da avvisare?"))return render();
 case"undo":ripristina(db,x.keys);save();render();return toast("Riportato in Da avvisare");
@@ -268,10 +268,10 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("mod").style.disp
 if(e.key==="/"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$("q").focus()}});
 /* ===== strumenti ===== */
 function tool(t){const c=()=>{$("mod").style.display="none";$("mod").className=""};
-if(t==="upl"){c();$("f").click()}else if(t==="imp"){c();$("imp").click()}else if(t==="sync"){SY.modal()}
+if(t==="upl"){c();$("f").click()}else if(t==="imp"){c();$("imp").click()}else if(t==="sync"){SY.modal()}else if(t==="drive"){DR.modal()}
 else if(t==="bk"){c();backup()}else if(t==="exp"){c();esporta()}else if(t==="theme")toggleTheme();else if(t==="reset")resetta();
 else if(t==="menu")modal(`<h3>Strumenti</h3>${TOOLS.map(x=>`<button class="b ${x[3]}" data-act="tool" data-t="${x[0]}">${x[1]} ${x[2]}</button>`).join("")}<button class="b c-gry" data-act="close">Chiudi</button>`)}
-const TOOLS=[["upl","📥","Carica Excel scadenze","c-ind"],["sync","☁️","Sincronizza Mac ↔ iPhone","c-ind"],["bk","💾","Scarica backup","c-grn"],["imp","♻️","Importa backup","c-gry"],["exp","📊","Esporta in Excel (CSV)","c-em"],["theme","🌓","Tema: auto · chiaro · scuro","c-gry"],["reset","🗑","Resetta tutti i dati","c-or"]];
+const TOOLS=[["upl","📥","Carica Excel scadenze","c-ind"],["sync","☁️","Sincronizza Mac ↔ iPhone","c-ind"],["drive","📇","Numeri su Google Drive","c-grn"],["bk","💾","Scarica backup","c-grn"],["imp","♻️","Importa backup","c-gry"],["exp","📊","Esporta in Excel (CSV)","c-em"],["theme","🌓","Tema: auto · chiaro · scuro","c-gry"],["reset","🗑","Resetta tutti i dati","c-or"]];
 $("tools").innerHTML=TOOLS.map(x=>`<button class="tl" data-act="tool" data-t="${x[0]}"><span class="e">${x[1]}</span>${x[2]}</button>`).join("");
 function scarica(nome,blob){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;a.click()}
 function backup(){db.lastBackup=new Date().toISOString();save();const t=new Date();
@@ -303,9 +303,10 @@ addEventListener("dragleave",()=>{dragN=Math.max(0,dragN-1);if(!dragN)ov.style.d
 addEventListener("dragover",e=>e.preventDefault());
 addEventListener("drop",e=>{e.preventDefault();dragN=0;ov.style.display="none";if(e.dataTransfer.files.length)smista(e.dataTransfer.files)});
 $("q").oninput=render;
-const tick=()=>{if(themeMode()==="auto"){const o=document.documentElement.dataset.theme;applyTheme();if(document.documentElement.dataset.theme!==o)render()}};setInterval(tick,60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick()});
+const tick=()=>{if(themeMode()==="auto"){const o=document.documentElement.dataset.theme;applyTheme();if(document.documentElement.dataset.theme!==o)render()}};(MQ.addEventListener?MQ.addEventListener("change",tick):MQ.addListener(tick));document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick()});
 $("th").onclick=toggleTheme;$("mn").onclick=()=>tool("menu");$("bkc").onclick=()=>SY.modal();
 SY.init({get:()=>db,set:d=>{db=d},save:saveLocal,render:()=>{if($("mod").style.display!=="flex")render()},toast:(t)=>toast(t)});
+if(!SY.locked())DR.init({get:()=>db,save:saveLocal,snap:d=>SY.snap(d),later:()=>SY.later(),render:()=>{if($("mod").style.display!=="flex")render()},toast:(t)=>toast(t)});
 render()
 
 
